@@ -23,43 +23,86 @@ public class Main {
     private void starter(int storageSize, int totalItems, int producersCount, int consumersCount) {
         Manager manager = new Manager(storageSize);
 
-        // Розподіляємо загальну кількість продукції між потоками
         int[] producerTasks = distributeItems(totalItems, producersCount);
         int[] consumerTasks = distributeItems(totalItems, consumersCount);
 
-        List<Thread> threads = new ArrayList<>();
+        // Створюємо списки для зберігання потоків перед запуском
+        List<Thread> producerThreads = new ArrayList<>();
+        List<Thread> consumerThreads = new ArrayList<>();
 
-        // Створення та запуск потоків Виробників
+        // 1. ЕТАП ПІДГОТОВКИ (Тільки створення)
         for (int i = 0; i < producersCount; i++) {
             System.out.println("Виробник " + (i + 1) + " має виробити: " + producerTasks[i]);
             Thread pThread = new Thread(new Producer(i + 1, producerTasks[i], manager));
-            threads.add(pThread);
-            pThread.start();
+            producerThreads.add(pThread); // Додаємо у список, НЕ запускаємо
         }
 
-        // Створення та запуск потоків Споживачів
         for (int i = 0; i < consumersCount; i++) {
             System.out.println("Споживач " + (i + 1) + " має спожити: " + consumerTasks[i]);
             Thread cThread = new Thread(new Consumer(i + 1, consumerTasks[i], manager));
-            threads.add(cThread);
-            cThread.start();
+            consumerThreads.add(cThread); // Додаємо у список, НЕ запускаємо
         }
 
+        // Всі налаштування завершено, друкуємо лінію
         System.out.println("-----------------------------------");
 
-        // Очікування завершення всіх потоків
-        for (Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        // 2. ЕТАП ЗАПУСКУ
+        for (Thread t : producerThreads) t.start();
+        for (Thread t : consumerThreads) t.start();
+
+        // 3. ОЧІКУВАННЯ ЗАВЕРШЕННЯ
+        try {
+            for (Thread t : producerThreads) t.join();
+            for (Thread t : consumerThreads) t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         System.out.println("-----------------------------------");
         System.out.println("Роботу завершено коректно. Всі елементи вироблено та спожито.");
         System.out.println("Залишок у сховищі: " + manager.storage.size());
     }
+
+//    private void starter(int storageSize, int totalItems, int producersCount, int consumersCount) {
+//        Manager manager = new Manager(storageSize);
+//
+//        // Розподіляємо загальну кількість продукції між потоками
+//        int[] producerTasks = distributeItems(totalItems, producersCount);
+//        int[] consumerTasks = distributeItems(totalItems, consumersCount);
+//
+//        List<Thread> threads = new ArrayList<>();
+//
+//        // Створення та запуск потоків Виробників
+//        for (int i = 0; i < producersCount; i++) {
+//            System.out.println("Виробник " + (i + 1) + " має виробити: " + producerTasks[i]);
+//            Thread pThread = new Thread(new Producer(i + 1, producerTasks[i], manager));
+//            threads.add(pThread);
+//            pThread.start();
+//        }
+//
+//        // Створення та запуск потоків Споживачів
+//        for (int i = 0; i < consumersCount; i++) {
+//            System.out.println("Споживач " + (i + 1) + " має спожити: " + consumerTasks[i]);
+//            Thread cThread = new Thread(new Consumer(i + 1, consumerTasks[i], manager));
+//            threads.add(cThread);
+//            cThread.start();
+//        }
+//
+//        System.out.println("-----------------------------------");
+//
+//        // Очікування завершення всіх потоків
+//        for (Thread thread : threads) {
+//            try {
+//                thread.join();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        System.out.println("-----------------------------------");
+//        System.out.println("Роботу завершено коректно. Всі елементи вироблено та спожито.");
+//        System.out.println("Залишок у сховищі: " + manager.storage.size());
+//    }
 
     // Метод для рівномірного розподілу продукції між потоками
     private int[] distributeItems(int totalItems, int entitiesCount) {
